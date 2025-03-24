@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".EmployeeFragment">
+    tools:context=".DepartmentFragment">
 
     <LinearLayout
         android:id="@+id/container"
@@ -25,17 +25,20 @@
             android:background="@drawable/bg_rounded"
             android:iconifiedByDefault="false"
             android:padding="8dp"
-            android:queryHint="Tìm kiếm nhân viên..." />
+            android:queryHint="Tìm kiếm đơn vị..." />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewDepartment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="80dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
         android:padding="8dp"
+        android:nestedScrollingEnabled="true"
         app:layout_constraintTop_toBottomOf="@id/container"
-        tools:layout_editor_absoluteX="-16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         tools:listitem="@layout/item_department" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

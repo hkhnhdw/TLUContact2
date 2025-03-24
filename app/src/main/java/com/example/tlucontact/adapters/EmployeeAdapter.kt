@@ -10,19 +10,12 @@ import com.example.tlucontact.R
 import com.example.tlucontact.models.Employee
 
 class EmployeeAdapter(
-    private val employeeList: List<Employee>,
-    private val onItemClick: (Employee) -> Unit
+    private val employeeList: MutableList<Employee>,
+    private val onClick: (Employee) -> Unit
 ) : RecyclerView.Adapter<EmployeeAdapter.EmployeeViewHolder>() {
 
-    class EmployeeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val name: TextView = itemView.findViewById(R.id.name_employee)
-        val position: TextView = itemView.findViewById(R.id.position_employee)
-        val phone: TextView = itemView.findViewById(R.id.phone_employee)
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EmployeeViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_employee, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_employee, parent, false)
         return EmployeeViewHolder(view)
     }
 
@@ -32,10 +25,14 @@ class EmployeeAdapter(
         holder.position.text = employee.position
         holder.phone.text = employee.phone
 
-        holder.itemView.setOnClickListener {
-            onItemClick(employee)
-        }
+        holder.itemView.setOnClickListener { onClick(employee) }
     }
 
     override fun getItemCount(): Int = employeeList.size
+
+    class EmployeeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val name: TextView = itemView.findViewById(R.id.name_employee)
+        val position: TextView = itemView.findViewById(R.id.position_employee)
+        val phone: TextView = itemView.findViewById(R.id.phone_employee)
+    }
 }

@@ -6,14 +6,25 @@ import com.example.tlucontact.models.Employee
 import com.google.firebase.database.*
 
 object FirebaseHelper {
-    private val database: DatabaseReference = FirebaseDatabase.getInstance().reference
+    private val database: DatabaseReference
+
+    init {
+        Log.d("FirebaseHelper", "Initializing FirebaseHelper")
+        try {
+            database = FirebaseDatabase.getInstance().reference
+            Log.d("FirebaseHelper", "FirebaseDatabase initialized successfully")
+        } catch (e: Exception) {
+            Log.e("FirebaseHelper", "Failed to initialize FirebaseDatabase: ${e.message}", e)
+            throw e
+        }
+    }
 
     fun getDepartments(callback: (List<Department>) -> Unit) {
         Log.d("FirebaseHelper", "Starting to fetch departments")
         try {
             database.child("departments").addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    Log.d("FirebaseHelper", "Snapshot received: ${snapshot.exists()}")
+                    Log.d("FirebaseHelper", "Snapshot received for departments: ${snapshot.exists()}")
                     if (!snapshot.exists()) {
                         Log.w("FirebaseHelper", "No departments found in snapshot")
                         callback(emptyList())
@@ -53,7 +64,7 @@ object FirebaseHelper {
         try {
             database.child("employees").addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    Log.d("FirebaseHelper", "Snapshot received: ${snapshot.exists()}")
+                    Log.d("FirebaseHelper", "Snapshot received for employees: ${snapshot.exists()}")
                     if (!snapshot.exists()) {
                         Log.w("FirebaseHelper", "No employees found in snapshot")
                         callback(emptyList())

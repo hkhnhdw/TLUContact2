@@ -22,18 +22,22 @@ class DepartmentFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         Log.d("DepartmentFragment", "onCreateView started")
-        val view = inflater.inflate(R.layout.fragment_department, container, false)
-        val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewDepartment)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        departmentAdapter = DepartmentAdapter(departmentList) { department ->
-            Log.d("DepartmentFragment", "Clicked department: ${department.name}")
-            val detailFragment = DepartmentDetailActivity.newInstance(department)
-            detailFragment.show(parentFragmentManager, "DepartmentDetail")
+        try {
+            val view = inflater.inflate(R.layout.fragment_department, container, false)
+            val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewDepartment)
+            recyclerView.layoutManager = LinearLayoutManager(requireContext())
+            departmentAdapter = DepartmentAdapter(departmentList) { department ->
+                val detailFragment = DepartmentDetailActivity.newInstance(department)
+                detailFragment.show(parentFragmentManager, "DepartmentDetail")
+            }
+            recyclerView.adapter = departmentAdapter
+            Log.d("DepartmentFragment", "RecyclerView setup completed")
+            loadDepartments()
+            return view
+        } catch (e: Exception) {
+            Log.e("DepartmentFragment", "Error in onCreateView: ${e.message}")
+            return null
         }
-        recyclerView.adapter = departmentAdapter
-        loadDepartments()
-        Log.d("DepartmentFragment", "onCreateView completed")
-        return view
     }
 
     private fun loadDepartments() {
