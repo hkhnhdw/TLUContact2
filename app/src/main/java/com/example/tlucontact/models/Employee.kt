@@ -7,5 +7,4 @@ data class Employee(
     val department: String = "",
     val phone: String = "",
     val email: String = "",
-    val avatarUrl: String = ""
-)
+    val avatarUrl: String = "")

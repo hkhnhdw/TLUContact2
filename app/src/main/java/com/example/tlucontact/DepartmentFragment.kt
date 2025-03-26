@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +17,7 @@ class DepartmentFragment : Fragment() {
 
     private lateinit var departmentAdapter: DepartmentAdapter
     private val departmentList = mutableListOf<Department>()
+    private val filteredDepartmentList = mutableListOf<Department>() // Danh sách sau khi tìm kiếm
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -25,13 +27,29 @@ class DepartmentFragment : Fragment() {
         try {
             val view = inflater.inflate(R.layout.fragment_department, container, false)
             val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewDepartment)
+            val searchView = view.findViewById<SearchView>(R.id.searchViewDepartment)
+
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
-            departmentAdapter = DepartmentAdapter(departmentList) { department ->
+            filteredDepartmentList.addAll(departmentList)
+            departmentAdapter = DepartmentAdapter(filteredDepartmentList) { department ->
                 val detailFragment = DepartmentDetailActivity.newInstance(department)
                 detailFragment.show(parentFragmentManager, "DepartmentDetail")
             }
             recyclerView.adapter = departmentAdapter
             Log.d("DepartmentFragment", "RecyclerView setup completed")
+
+            // Xử lý SearchView
+            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                    return false
+                }
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    filterDepartments(newText ?: "")
+                    return true
+                }
+            })
+
             loadDepartments()
             return view
         } catch (e: Exception) {
@@ -46,12 +64,25 @@ class DepartmentFragment : Fragment() {
             Log.d("DepartmentFragment", "Received ${departments.size} departments")
             departmentList.clear()
             departmentList.addAll(departments)
-            departmentAdapter.notifyDataSetChanged()
+            filterDepartments("")
             if (departments.isEmpty()) {
                 Log.w("DepartmentFragment", "No departments loaded - check Firebase data or connection")
             } else {
                 Log.d("DepartmentFragment", "Departments loaded: ${departments.map { it.name }}")
             }
         }
+    }
+
+    private fun filterDepartments(query: String) {
+        filteredDepartmentList.clear()
+        val searchQuery = query.lowercase()
+
+        for (department in departmentList) {
+            if (searchQuery.isEmpty() || department.name.lowercase().contains(searchQuery)) {
+                filteredDepartmentList.add(department)
+            }
+        }
+
+        departmentAdapter.notifyDataSetChanged()
     }
 }

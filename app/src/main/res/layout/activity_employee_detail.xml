@@ -3,18 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="300dp"
-    android:layout_height="400dp"
-    android:background="@android:color/white"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
     android:padding="20dp"
     tools:context=".EmployeeDetailActivity"
     android:layout_gravity="center">
-
 
     <TextView
         android:id="@+id/tvEmployeeTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
         android:text="Thông tin nhân viên"
         android:textColor="@android:color/black"
         android:textSize="22sp"
@@ -41,11 +39,11 @@
         android:text="Họ Tên"
         android:textSize="20sp"
         android:textStyle="bold"
+        android:textColor="@android:color/black"
         app:layout_constraintTop_toBottomOf="@id/imgEmployee"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"
-        android:textColor="@android:color/black"/>
+        android:layout_marginTop="8dp"/>
 
     <TextView
         android:id="@+id/tvEmployeePosition"
@@ -95,12 +93,39 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="4dp"/>
 
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/tvEmployeeEmail"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="10dp"
+        android:gravity="center_horizontal">
+
+        <Button
+            android:id="@+id/editButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Sửa"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/deleteButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Xóa"/>
+    </LinearLayout>
+
     <Button
         android:id="@+id/btnClose"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Đóng"
-        app:layout_constraintTop_toBottomOf="@id/tvEmployeeEmail"
+        app:layout_constraintTop_toBottomOf="@id/buttonContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="10dp"/>

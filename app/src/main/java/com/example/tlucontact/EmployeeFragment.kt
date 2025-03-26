@@ -5,9 +5,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Spinner
 import android.widget.Toast
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,6 +24,7 @@ class EmployeeFragment : Fragment() {
 
     private lateinit var employeeAdapter: EmployeeAdapter
     private val employeeList = mutableListOf<Employee>()
+    private val filteredEmployeeList = mutableListOf<Employee>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -29,14 +33,44 @@ class EmployeeFragment : Fragment() {
         Log.d("EmployeeFragment", "onCreateView started")
         try {
             val view = inflater.inflate(R.layout.fragment_employee, container, false)
-            val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewEmployee)
-            recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-            employeeAdapter = EmployeeAdapter(employeeList) { employee ->
-                showActionDialog(employee)
+            // Ánh xạ các view
+            val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewEmployee)
+            val searchView = view.findViewById<SearchView>(R.id.searchViewEmployee)
+            val departmentSpinner = view.findViewById<Spinner>(R.id.spinner_department)
+
+            recyclerView.layoutManager = LinearLayoutManager(requireContext())
+            filteredEmployeeList.addAll(employeeList)
+            employeeAdapter = EmployeeAdapter(filteredEmployeeList) { employee ->
+                val dialog = EmployeeDetailActivity.newInstance(employee)
+                dialog.show(parentFragmentManager, "EmployeeDetailDialog")
             }
             recyclerView.adapter = employeeAdapter
             Log.d("EmployeeFragment", "RecyclerView setup completed")
+
+            // Xử lý SearchView
+            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                    return false
+                }
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    filterEmployees(newText ?: "", departmentSpinner.selectedItem.toString())
+                    return true
+                }
+            })
+
+            // Xử lý Spinner
+            departmentSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    val selectedDepartment = parent?.getItemAtPosition(position).toString()
+                    filterEmployees(searchView.query.toString(), selectedDepartment)
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    // Không làm gì
+                }
+            }
 
             // Xử lý nút thêm nhân viên
             val addEmployeeButton = view.findViewById<FloatingActionButton>(R.id.addEmployeeButton)
@@ -55,16 +89,39 @@ class EmployeeFragment : Fragment() {
     private fun loadEmployees() {
         Log.d("EmployeeFragment", "Loading employees from Firebase")
         FirebaseHelper.getEmployees { employees ->
-            Log.d("EmployeeFragment", "Received ${employees.size} employees")
-            employeeList.clear()
-            employeeList.addAll(employees)
-            employeeAdapter.notifyDataSetChanged()
             if (employees.isEmpty()) {
                 Log.w("EmployeeFragment", "No employees loaded - check Firebase data or connection")
+                Toast.makeText(requireContext(), "Failed to load employees. Check your connection or permissions.", Toast.LENGTH_LONG).show()
             } else {
+                Log.d("EmployeeFragment", "Received ${employees.size} employees")
                 Log.d("EmployeeFragment", "Employees loaded: ${employees.map { it.name }}")
+                employeeList.clear()
+                employeeList.addAll(employees)
+                filterEmployees("", "Tất cả")
             }
         }
+    }
+
+    private fun filterEmployees(query: String, department: String) {
+        filteredEmployeeList.clear()
+        val searchQuery = query.lowercase()
+
+        for (employee in employeeList) {
+            val matchesSearch = searchQuery.isEmpty() ||
+                    employee.name.lowercase().contains(searchQuery) ||
+                    employee.position.lowercase().contains(searchQuery) ||
+                    employee.department.lowercase().contains(searchQuery) ||
+                    employee.phone.lowercase().contains(searchQuery) ||
+                    employee.email.lowercase().contains(searchQuery)
+
+            val matchesDepartment = department == "Tất cả" || employee.department == department
+
+            if (matchesSearch && matchesDepartment) {
+                filteredEmployeeList.add(employee)
+            }
+        }
+
+        employeeAdapter.notifyDataSetChanged()
     }
 
     private fun showAddEmployeeDialog() {
@@ -78,7 +135,6 @@ class EmployeeFragment : Fragment() {
         val editDepartment = dialogView.findViewById<EditText>(R.id.editDepartment)
         val editPhone = dialogView.findViewById<EditText>(R.id.editPhone)
         val editEmail = dialogView.findViewById<EditText>(R.id.editEmail)
-        val editAvatarUrl = dialogView.findViewById<EditText>(R.id.editAvatarUrl)
         val saveButton = dialogView.findViewById<Button>(R.id.saveButton)
 
         saveButton.setOnClickListener {
@@ -87,7 +143,6 @@ class EmployeeFragment : Fragment() {
             val department = editDepartment.text.toString().trim()
             val phone = editPhone.text.toString().trim()
             val email = editEmail.text.toString().trim()
-            val avatarUrl = editAvatarUrl.text.toString().trim()
 
             if (name.isEmpty() || position.isEmpty() || department.isEmpty() || phone.isEmpty() || email.isEmpty()) {
                 Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
@@ -101,8 +156,7 @@ class EmployeeFragment : Fragment() {
                 position = position,
                 department = department,
                 phone = phone,
-                email = email,
-                avatarUrl = avatarUrl
+                email = email
             )
 
             addEmployee(newEmployee)
@@ -118,120 +172,12 @@ class EmployeeFragment : Fragment() {
             .addOnSuccessListener {
                 Log.d("EmployeeFragment", "Added employee: ${employee.name}")
                 employeeList.add(employee)
-                employeeAdapter.notifyItemInserted(employeeList.size - 1)
+                filterEmployees("", "Tất cả")
                 Toast.makeText(requireContext(), "Added successfully", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener { e ->
                 Log.e("EmployeeFragment", "Failed to add employee: ${e.message}")
                 Toast.makeText(requireContext(), "Failed to add: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun showActionDialog(employee: Employee) {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_employee_actions, null)
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .create()
-
-        val editButton = dialogView.findViewById<Button>(R.id.editButton)
-        val deleteButton = dialogView.findViewById<Button>(R.id.deleteButton)
-        val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
-
-        editButton.setOnClickListener {
-            dialog.dismiss()
-            showEditEmployeeDialog(employee)
-        }
-
-        deleteButton.setOnClickListener {
-            dialog.dismiss()
-            androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Delete Employee")
-                .setMessage("Are you sure you want to delete ${employee.name}?")
-                .setPositiveButton("Yes") { _, _ ->
-                    deleteEmployee(employee)
-                }
-                .setNegativeButton("No", null)
-                .show()
-        }
-
-        cancelButton.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialog.show()
-    }
-
-    private fun showEditEmployeeDialog(employee: Employee) {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_employee, null)
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .create()
-
-        val editName = dialogView.findViewById<EditText>(R.id.editName)
-        val editPosition = dialogView.findViewById<EditText>(R.id.editPosition)
-        val editDepartment = dialogView.findViewById<EditText>(R.id.editDepartment)
-        val editPhone = dialogView.findViewById<EditText>(R.id.editPhone)
-        val editEmail = dialogView.findViewById<EditText>(R.id.editEmail)
-        val editAvatarUrl = dialogView.findViewById<EditText>(R.id.editAvatarUrl)
-        val saveButton = dialogView.findViewById<Button>(R.id.saveButton)
-
-        editName.setText(employee.name)
-        editPosition.setText(employee.position)
-        editDepartment.setText(employee.department)
-        editPhone.setText(employee.phone)
-        editEmail.setText(employee.email)
-        editAvatarUrl.setText(employee.avatarUrl)
-
-        saveButton.setOnClickListener {
-            val updatedEmployee = employee.copy(
-                name = editName.text.toString().trim(),
-                position = editPosition.text.toString().trim(),
-                department = editDepartment.text.toString().trim(),
-                phone = editPhone.text.toString().trim(),
-                email = editEmail.text.toString().trim(),
-                avatarUrl = editAvatarUrl.text.toString().trim()
-            )
-
-            updateEmployee(updatedEmployee)
-            dialog.dismiss()
-        }
-
-        dialog.show()
-    }
-
-    private fun updateEmployee(employee: Employee) {
-        val position = employeeList.indexOfFirst { it.id == employee.id }
-        if (position == -1) return
-
-        val database = FirebaseDatabase.getInstance().reference.child("employees").child(employee.id)
-        database.setValue(employee)
-            .addOnSuccessListener {
-                Log.d("EmployeeFragment", "Updated employee: ${employee.name}")
-                employeeList[position] = employee
-                employeeAdapter.notifyItemChanged(position)
-                Toast.makeText(requireContext(), "Updated successfully", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener { e ->
-                Log.e("EmployeeFragment", "Failed to update employee: ${e.message}")
-                Toast.makeText(requireContext(), "Failed to update: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun deleteEmployee(employee: Employee) {
-        val position = employeeList.indexOfFirst { it.id == employee.id }
-        if (position == -1) return
-
-        val database = FirebaseDatabase.getInstance().reference.child("employees").child(employee.id)
-        database.removeValue()
-            .addOnSuccessListener {
-                Log.d("EmployeeFragment", "Deleted employee: ${employee.name}")
-                employeeList.removeAt(position)
-                employeeAdapter.notifyItemRemoved(position)
-                Toast.makeText(requireContext(), "Deleted successfully", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener { e ->
-                Log.e("EmployeeFragment", "Failed to delete employee: ${e.message}")
-                Toast.makeText(requireContext(), "Failed to delete: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="department_list">
+        <item>Tất cả</item>
+        <item>Khoa Công nghệ Thông tin</item>
+        <item>Khoa Công trình</item>
+        <item>Phòng Kế toán</item>
+        <item>Phòng Đào tạo</item>
+    </string-array>
+</resources>

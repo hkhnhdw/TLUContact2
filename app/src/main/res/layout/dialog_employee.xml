@@ -3,48 +3,44 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@drawable/dialog_rounded">
 
     <EditText
         android:id="@+id/editName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Name" />
+        android:hint="Name"/>
 
     <EditText
         android:id="@+id/editPosition"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Position" />
+        android:hint="Position"/>
 
     <EditText
         android:id="@+id/editDepartment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Department" />
+        android:hint="Department"/>
 
     <EditText
         android:id="@+id/editPhone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Phone" />
+        android:hint="Phone"/>
 
     <EditText
         android:id="@+id/editEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Email" />
+        android:hint="Email"/>
 
-    <EditText
-        android:id="@+id/editAvatarUrl"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Avatar URL (optional)" />
+
 
     <Button
         android:id="@+id/saveButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save" />
-
+        android:text="Save"/>
 </LinearLayout>
