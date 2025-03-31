@@ -1,6 +1,8 @@
 package com.example.tlucontact
 
 import android.app.Dialog
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -61,6 +63,7 @@ class EmployeeDetailActivity : DialogFragment() {
         val editButton = view.findViewById<Button>(R.id.editButton)
         val deleteButton = view.findViewById<Button>(R.id.deleteButton)
         val backButton = view.findViewById<Button>(R.id.btnClose)
+        val callButton = view.findViewById<Button>(R.id.btnCall)
 
         detailName.text = "Tên: ${employee.name}"
         detailPosition.text = "Chức vụ: ${employee.position}"
@@ -68,7 +71,7 @@ class EmployeeDetailActivity : DialogFragment() {
         detailPhone.text = "Số điện thoại: ${employee.phone}"
         detailEmail.text = "Email: ${employee.email}"
 
-        // Kiểm tra email để ẩn/hiện nút Sửa và Xóa
+
         val canEdit = currentUserEmail != null && currentUserEmail == employee.email
         Log.d("EmployeeDetailActivity", "Checking edit permission: currentUserEmail=$currentUserEmail, employeeEmail=${employee.email}, canEdit=$canEdit")
 
@@ -97,6 +100,13 @@ class EmployeeDetailActivity : DialogFragment() {
 
         backButton.setOnClickListener {
             dismiss()
+        }
+
+        callButton.setOnClickListener {
+            val phoneNumber = employee.phone
+            val intent = Intent(Intent.ACTION_DIAL)
+            intent.data = Uri.parse("tel:$phoneNumber")
+            startActivity(intent)
         }
 
         return view

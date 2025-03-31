@@ -17,7 +17,7 @@ class DepartmentFragment : Fragment() {
 
     private lateinit var departmentAdapter: DepartmentAdapter
     private val departmentList = mutableListOf<Department>()
-    private val filteredDepartmentList = mutableListOf<Department>() // Danh sách sau khi tìm kiếm
+    private val filteredDepartmentList = mutableListOf<Department>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,8 +32,8 @@ class DepartmentFragment : Fragment() {
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             filteredDepartmentList.addAll(departmentList)
             departmentAdapter = DepartmentAdapter(filteredDepartmentList) { department ->
-                val detailFragment = DepartmentDetailActivity.newInstance(department)
-                detailFragment.show(parentFragmentManager, "DepartmentDetail")
+                val dialog = DepartmentDetailActivity.newInstance(department)
+                dialog.show(parentFragmentManager, "DepartmentDetailDialog")
             }
             recyclerView.adapter = departmentAdapter
             Log.d("DepartmentFragment", "RecyclerView setup completed")

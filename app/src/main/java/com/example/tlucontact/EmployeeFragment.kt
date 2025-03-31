@@ -34,7 +34,6 @@ class EmployeeFragment : Fragment() {
         try {
             val view = inflater.inflate(R.layout.fragment_employee, container, false)
 
-            // Ánh xạ các view
             val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewEmployee)
             val searchView = view.findViewById<SearchView>(R.id.searchViewEmployee)
             val departmentSpinner = view.findViewById<Spinner>(R.id.spinner_department)
@@ -48,7 +47,6 @@ class EmployeeFragment : Fragment() {
             recyclerView.adapter = employeeAdapter
             Log.d("EmployeeFragment", "RecyclerView setup completed")
 
-            // Xử lý SearchView
             searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(query: String?): Boolean {
                     return false
