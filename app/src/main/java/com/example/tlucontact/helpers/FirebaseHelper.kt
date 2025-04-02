@@ -3,10 +3,12 @@ package com.example.tlucontact.helpers
 import android.util.Log
 import com.example.tlucontact.models.Department
 import com.example.tlucontact.models.Employee
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
 object FirebaseHelper {
     private val database: DatabaseReference
+    private const val ADMIN_EMAIL = "admin@tlu.edu.vn"
 
     init {
         Log.d("FirebaseHelper", "Initializing FirebaseHelper")
@@ -97,5 +99,10 @@ object FirebaseHelper {
             Log.e("FirebaseHelper", "Exception in getEmployees: ${e.message}")
             callback(emptyList())
         }
+    }
+
+    fun isAdmin(): Boolean {
+        val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
+        return currentUserEmail != null && currentUserEmail == ADMIN_EMAIL
     }
 }

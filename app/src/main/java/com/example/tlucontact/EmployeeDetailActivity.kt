@@ -1,6 +1,5 @@
 package com.example.tlucontact
 
-import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -13,9 +12,8 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.DialogFragment
-import com.example.tlucontact.models.Department
+import com.example.tlucontact.helpers.FirebaseHelper
 import com.example.tlucontact.models.Employee
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -37,7 +35,6 @@ class EmployeeDetailActivity : DialogFragment() {
         val phone = arguments?.getString("EMPLOYEE_PHONE") ?: ""
         val email = arguments?.getString("EMPLOYEE_EMAIL") ?: ""
         val avatarUrl = arguments?.getString("EMPLOYEE_AVATAR_URL") ?: ""
-
 
         employee = Employee(id, name, position, department, phone, email, avatarUrl)
 
@@ -71,14 +68,24 @@ class EmployeeDetailActivity : DialogFragment() {
         detailPhone.text = "Số điện thoại: ${employee.phone}"
         detailEmail.text = "Email: ${employee.email}"
 
-
+        // Kiểm tra quyền
+        val isAdmin = FirebaseHelper.isAdmin()
         val canEdit = currentUserEmail != null && currentUserEmail == employee.email
-        Log.d("EmployeeDetailActivity", "Checking edit permission: currentUserEmail=$currentUserEmail, employeeEmail=${employee.email}, canEdit=$canEdit")
 
-        if (canEdit) {
+        Log.d("EmployeeDetailActivity", "Checking permissions: isAdmin=$isAdmin, currentUserEmail=$currentUserEmail, employeeEmail=${employee.email}, canEdit=$canEdit")
+
+        // Quyền admin: Có thể chỉnh sửa và xóa bất kỳ nhân viên nào
+        if (isAdmin) {
             editButton.visibility = View.VISIBLE
             deleteButton.visibility = View.VISIBLE
-        } else {
+        }
+        // Quyền nhân viên: Chỉ được chỉnh sửa thông tin của chính mình, không được xóa
+        else if (canEdit) {
+            editButton.visibility = View.VISIBLE
+            deleteButton.visibility = View.GONE
+        }
+        // Người dùng khác: Không có quyền chỉnh sửa hoặc xóa
+        else {
             editButton.visibility = View.GONE
             deleteButton.visibility = View.GONE
         }
@@ -132,12 +139,23 @@ class EmployeeDetailActivity : DialogFragment() {
         editEmail.setText(employee.email)
 
         saveButton.setOnClickListener {
+            val name = editName.text.toString().trim()
+            val position = editPosition.text.toString().trim()
+            val department = editDepartment.text.toString().trim()
+            val phone = editPhone.text.toString().trim()
+            val email = editEmail.text.toString().trim()
+
+            if (name.isEmpty() || position.isEmpty() || department.isEmpty() || phone.isEmpty() || email.isEmpty()) {
+                Toast.makeText(requireContext(), "Vui lòng điền đầy đủ thông tin", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             val updatedEmployee = employee.copy(
-                name = editName.text.toString().trim(),
-                position = editPosition.text.toString().trim(),
-                department = editDepartment.text.toString().trim(),
-                phone = editPhone.text.toString().trim(),
-                email = editEmail.text.toString().trim()
+                name = name,
+                position = position,
+                department = department,
+                phone = phone,
+                email = email
             )
 
             updateEmployee(updatedEmployee)
@@ -163,7 +181,7 @@ class EmployeeDetailActivity : DialogFragment() {
             }
             .addOnFailureListener { e ->
                 Log.e("EmployeeDetailActivity", "Failed to update employee: ${e.message}")
-                Toast.makeText(requireContext(), "Cập nhật thất bại: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Cập nhật thất bại: Kiểm tra kết nối hoặc quyền", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -177,7 +195,7 @@ class EmployeeDetailActivity : DialogFragment() {
             }
             .addOnFailureListener { e ->
                 Log.e("EmployeeDetailActivity", "Failed to delete employee: ${e.message}")
-                Toast.makeText(requireContext(), "Xóa thất bại: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Xóa thất bại: Kiểm tra kết nối hoặc quyền", Toast.LENGTH_SHORT).show()
             }
     }
 

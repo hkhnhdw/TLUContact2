@@ -37,6 +37,7 @@ class EmployeeFragment : Fragment() {
             val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewEmployee)
             val searchView = view.findViewById<SearchView>(R.id.searchViewEmployee)
             val departmentSpinner = view.findViewById<Spinner>(R.id.spinner_department)
+            val addEmployeeButton = view.findViewById<FloatingActionButton>(R.id.addEmployeeButton)
 
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             filteredEmployeeList.addAll(employeeList)
@@ -46,6 +47,17 @@ class EmployeeFragment : Fragment() {
             }
             recyclerView.adapter = employeeAdapter
             Log.d("EmployeeFragment", "RecyclerView setup completed")
+
+            if (FirebaseHelper.isAdmin()) {
+                addEmployeeButton.visibility = View.VISIBLE
+            } else {
+                addEmployeeButton.visibility = View.GONE
+            }
+
+
+            addEmployeeButton.setOnClickListener {
+                showAddEmployeeDialog()
+            }
 
             searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(query: String?): Boolean {
@@ -58,7 +70,7 @@ class EmployeeFragment : Fragment() {
                 }
             })
 
-            // Xử lý Spinner
+
             departmentSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                     val selectedDepartment = parent?.getItemAtPosition(position).toString()
@@ -66,14 +78,8 @@ class EmployeeFragment : Fragment() {
                 }
 
                 override fun onNothingSelected(parent: AdapterView<*>?) {
-                    // Không làm gì
-                }
-            }
 
-            // Xử lý nút thêm nhân viên
-            val addEmployeeButton = view.findViewById<FloatingActionButton>(R.id.addEmployeeButton)
-            addEmployeeButton.setOnClickListener {
-                showAddEmployeeDialog()
+                }
             }
 
             loadEmployees()
