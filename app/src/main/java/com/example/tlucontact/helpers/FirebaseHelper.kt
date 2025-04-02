@@ -103,6 +103,7 @@ object FirebaseHelper {
 
     fun isAdmin(): Boolean {
         val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
+        Log.d("FirebaseHelper", "Current user email: $currentUserEmail")
         return currentUserEmail != null && currentUserEmail == ADMIN_EMAIL
     }
 }

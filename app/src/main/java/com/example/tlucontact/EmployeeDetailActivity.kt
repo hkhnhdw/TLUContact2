@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,6 +29,7 @@ class EmployeeDetailActivity : DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Lấy dữ liệu nhân viên từ arguments
         val id = arguments?.getString("EMPLOYEE_ID") ?: ""
         val name = arguments?.getString("EMPLOYEE_NAME") ?: ""
         val position = arguments?.getString("EMPLOYEE_POSITION") ?: ""
@@ -38,6 +40,7 @@ class EmployeeDetailActivity : DialogFragment() {
 
         employee = Employee(id, name, position, department, phone, email, avatarUrl)
 
+        // Kiểm tra nếu không có ID, đóng dialog
         if (id.isEmpty()) {
             Toast.makeText(requireContext(), "Không tìm thấy thông tin nhân viên", Toast.LENGTH_SHORT).show()
             dismiss()
@@ -50,8 +53,10 @@ class EmployeeDetailActivity : DialogFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // Nạp layout cho dialog
         val view = inflater.inflate(R.layout.activity_employee_detail, container, false)
 
+        // Ánh xạ các thành phần giao diện
         val detailName = view.findViewById<TextView>(R.id.tvEmployeeName)
         val detailPosition = view.findViewById<TextView>(R.id.tvEmployeePosition)
         val detailDepartment = view.findViewById<TextView>(R.id.tvEmployeeUnit)
@@ -62,6 +67,7 @@ class EmployeeDetailActivity : DialogFragment() {
         val backButton = view.findViewById<Button>(R.id.btnClose)
         val callButton = view.findViewById<Button>(R.id.btnCall)
 
+        // Hiển thị thông tin nhân viên
         detailName.text = "Tên: ${employee.name}"
         detailPosition.text = "Chức vụ: ${employee.position}"
         detailDepartment.text = "Phòng ban: ${employee.department}"
@@ -90,10 +96,12 @@ class EmployeeDetailActivity : DialogFragment() {
             deleteButton.visibility = View.GONE
         }
 
+        // Xử lý sự kiện nút "Sửa"
         editButton.setOnClickListener {
             showEditEmployeeDialog()
         }
 
+        // Xử lý sự kiện nút "Xóa"
         deleteButton.setOnClickListener {
             AlertDialog.Builder(requireContext())
                 .setTitle("Xóa Nhân viên")
@@ -105,10 +113,12 @@ class EmployeeDetailActivity : DialogFragment() {
                 .show()
         }
 
+        // Xử lý sự kiện nút "Đóng"
         backButton.setOnClickListener {
             dismiss()
         }
 
+        // Xử lý sự kiện nút "Gọi"
         callButton.setOnClickListener {
             val phoneNumber = employee.phone
             val intent = Intent(Intent.ACTION_DIAL)
@@ -120,11 +130,13 @@ class EmployeeDetailActivity : DialogFragment() {
     }
 
     private fun showEditEmployeeDialog() {
+        // Nạp layout cho dialog chỉnh sửa
         val dialogView = layoutInflater.inflate(R.layout.dialog_employee, null)
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .create()
 
+        // Ánh xạ các thành phần trong dialog
         val editName = dialogView.findViewById<EditText>(R.id.editName)
         val editPosition = dialogView.findViewById<EditText>(R.id.editPosition)
         val editDepartment = dialogView.findViewById<EditText>(R.id.editDepartment)
@@ -132,12 +144,17 @@ class EmployeeDetailActivity : DialogFragment() {
         val editEmail = dialogView.findViewById<EditText>(R.id.editEmail)
         val saveButton = dialogView.findViewById<Button>(R.id.saveButton)
 
+        // Điền thông tin hiện tại vào các trường
         editName.setText(employee.name)
         editPosition.setText(employee.position)
         editDepartment.setText(employee.department)
         editPhone.setText(employee.phone)
         editEmail.setText(employee.email)
 
+        // Vô hiệu hóa trường email vì email là key
+        editEmail.isEnabled = false
+
+        // Xử lý sự kiện nút "Lưu"
         saveButton.setOnClickListener {
             val name = editName.text.toString().trim()
             val position = editPosition.text.toString().trim()
@@ -145,19 +162,36 @@ class EmployeeDetailActivity : DialogFragment() {
             val phone = editPhone.text.toString().trim()
             val email = editEmail.text.toString().trim()
 
+            // Kiểm tra các trường không được để trống
             if (name.isEmpty() || position.isEmpty() || department.isEmpty() || phone.isEmpty() || email.isEmpty()) {
                 Toast.makeText(requireContext(), "Vui lòng điền đầy đủ thông tin", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            val updatedEmployee = employee.copy(
+            // Kiểm tra định dạng số điện thoại
+            if (!phone.matches(Regex("\\d+"))) {
+                Toast.makeText(requireContext(), "Số điện thoại không hợp lệ", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Kiểm tra định dạng email (dù không cho chỉnh sửa)
+            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(requireContext(), "Email không hợp lệ", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Tạo đối tượng nhân viên mới với thông tin đã chỉnh sửa
+            val updatedEmployee = Employee(
+                id = employee.id,
                 name = name,
                 position = position,
                 department = department,
                 phone = phone,
-                email = email
+                email = email,
+                avatarUrl = employee.avatarUrl
             )
 
+            // Cập nhật nhân viên lên Firebase
             updateEmployee(updatedEmployee)
             dialog.dismiss()
         }
@@ -166,12 +200,14 @@ class EmployeeDetailActivity : DialogFragment() {
     }
 
     private fun updateEmployee(updatedEmployee: Employee) {
-        val database = FirebaseDatabase.getInstance().reference.child("employees").child(employee.id)
+        // Sử dụng email làm key để cập nhật nhân viên
+        val database = FirebaseDatabase.getInstance().reference.child("employees").child(employee.email)
         database.setValue(updatedEmployee)
             .addOnSuccessListener {
                 Log.d("EmployeeDetailActivity", "Updated employee: ${updatedEmployee.name}")
                 employee = updatedEmployee
 
+                // Cập nhật giao diện
                 view?.findViewById<TextView>(R.id.tvEmployeeName)?.text = "Tên: ${employee.name}"
                 view?.findViewById<TextView>(R.id.tvEmployeePosition)?.text = "Chức vụ: ${employee.position}"
                 view?.findViewById<TextView>(R.id.tvEmployeeUnit)?.text = "Phòng ban: ${employee.department}"
@@ -181,12 +217,13 @@ class EmployeeDetailActivity : DialogFragment() {
             }
             .addOnFailureListener { e ->
                 Log.e("EmployeeDetailActivity", "Failed to update employee: ${e.message}")
-                Toast.makeText(requireContext(), "Cập nhật thất bại: Kiểm tra kết nối hoặc quyền", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Cập nhật thất bại: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
 
     private fun deleteEmployee() {
-        val database = FirebaseDatabase.getInstance().reference.child("employees").child(employee.id)
+        // Sử dụng email làm key để xóa nhân viên
+        val database = FirebaseDatabase.getInstance().reference.child("employees").child(employee.email)
         database.removeValue()
             .addOnSuccessListener {
                 Log.d("EmployeeDetailActivity", "Deleted employee: ${employee.name}")
@@ -195,7 +232,7 @@ class EmployeeDetailActivity : DialogFragment() {
             }
             .addOnFailureListener { e ->
                 Log.e("EmployeeDetailActivity", "Failed to delete employee: ${e.message}")
-                Toast.makeText(requireContext(), "Xóa thất bại: Kiểm tra kết nối hoặc quyền", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Xóa thất bại: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
 
